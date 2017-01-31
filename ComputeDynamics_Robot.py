@@ -5,7 +5,6 @@ Created on Mar 7, 2010
 '''
 
 import sys
-sys.path.append(r'C:\UserSource\PythonCodes\MyPythonLib')
 
 from scipy.linalg import *
 from numpy import *
@@ -19,53 +18,39 @@ class SetRobot(RobotBaseClass):
 ############################## Enter Robot Data below
          
         self.Name = 'Robot' 
-        self.DOF = DOF = 6
+        self.DOF = DOF = 2
         
         # unit mm
-        h1 = 740
-        h2 = 1075
-        h3 = 250
-        d1 = 305
-        d2 = 1275 
-        d3 = 240
+        l1 = 1000
+        l2 = 1000
         
         scale = 0.001 # mm -> m
-        
+ 
+        # Direction of Joint Rotation
         w = array([
-             [0,0,1],
              [0,1,0],
              [0,1,0],
-             [1,0,0],
-             [0,1,0],
-             [1,0,0]
              ])
-             
+
+        # Position of Joint     
         p = scale*array([
                    [0,0,0],
-                   [d1,0,h1],
-                   [d1,0,h1+h2],
-                   [d1,0,h1+h2+h3],
-                   [d1+d2,0,h1+h2+h3],
-                   [d1+d2+d3,0,h1+h2+h3],
+                   [l1,0,0],
                    ])
-        
-
+       
+        # Gravity Vector    
         self.gravity = [0, 0, -9.81]
         
         # 
-        self.m = [200, 200, 200, 100, 100, 200] # mass in kg
+        self.m = [1, 1, ] # link weight in kg
         self.r = array([ # mass center wrt i-th frame 
-                        array([0,0,0]),
-                        array([0,0,0]),
-                        array([0,0,0]),
-                        array([0,0,0]),
-                        array([0,0,0]),
-                        array([0,0,0]),
+                        array([0.5,0,0]),
+                        array([0.5,0,0]),
                         ]) 
         
-        self.joint_max_angle_deg = array([150,90,120,120,255,120])# Max. Angle, in degrees
+        self.joint_max_angle_deg = array([360, 360])# Max. Angle, in degrees
         self.joint_min_angle_deg = -self.joint_max_angle_deg
-        self.joint_angle_home_deg = array([0,0,0,0,0,0]) # Home Position
+        self.joint_angle_home_deg = array([0,0]) # Home Position
   
 ############## Commmon Part
         self.scale = scale
@@ -86,7 +71,6 @@ class SetRobot(RobotBaseClass):
         
         P0 = self.p[DOF-1]+EEF_Pos
         
-        dprint(P0)
         R0 = EEF_Ori
         self.P0 = P0
 
@@ -137,24 +121,27 @@ class SetRobot(RobotBaseClass):
         
                 
 if __name__ == "__main__":
-    q_zero = array([0, 0, 0, 0, 0, 0]) * pi / 180
-    ToolRelPos = array([0.0, 0, 0.0])*0.5
-    R = eye(3)
+    Deg2Rad = pi / 180.0;
+    Rad2Deg = 180.0 / pi;
+    
+    q_zero = array([0, 0]) * Deg2Rad;
+    ToolRelPos = array([1.0, 0, 0.0]);
     Robot = SetRobot(ToolRelPos)
-    Robot.SetEndEffectorKinParameter(ToolRelPos, R)
     
-    q_arb = array([10, 10, 10, 90, 0, 90]) * pi / 180
-    q_home = array([90, 0, 0, 0, 0, 0]) * pi / 180
-    q = q_home
-    dq = zeros(Robot.DOF)
-    ddq = zeros(Robot.DOF)
+    q_deg = array([0, 90])
+    q = q_deg * Deg2Rad;
+    dq = array([0, 0])
+    ddq = array([0, 0])
     
-    T = FwdKin(Robot, q)
-    nprint (T)
+    ToolPose = FwdKin(Robot, q)
+    TCP_Pos = ToolPose[0:3, 3]
     
-    Force = array([0, 0, 0])
-    Torque = array([0, 0, 0])
-    F_ext = hstack([Torque, Force])
+    nprint (ToolPose)
+    nprint (TCP_Pos)
+    
+    EE_Force = array([0, 0, 0])
+    EE_Torque = array([0, 0, 0])
+    F_ext = hstack([EE_Torque, EE_Force])
     nprint (F_ext)
     
     gravity = array([0, 0, -9.81])
